@@ -6,7 +6,7 @@ import (
 	"postsAPI/models"
 )
 
-func PostCreate(ctx *gin.Context) {
+func CreatePost(ctx *gin.Context) {
 	var body struct {
 		Title string `json:"title"`
 		Body  string `json:"body"`
@@ -16,6 +16,7 @@ func PostCreate(ctx *gin.Context) {
 		ctx.Status(400)
 		return
 	}
+
 	post := models.Post{Title: body.Title, Body: body.Body}
 	result := initializers.DB.Create(&post)
 	if result.Error != nil {
@@ -24,6 +25,41 @@ func PostCreate(ctx *gin.Context) {
 	}
 	ctx.JSON(200, gin.H{
 		"post": post,
+	})
+}
+
+func CreatePostByUser(ctx *gin.Context) {
+	var body struct {
+		Title string `json:"title"`
+		Body  string `json:"body"`
+	}
+	err := ctx.Bind(&body)
+	if err != nil {
+		ctx.Status(400)
+		return
+	}
+
+	post := models.Post{Title: body.Title, Body: body.Body, UserId: ctx.Param("id")}
+	result := initializers.DB.Create(&post)
+	if result.Error != nil {
+		ctx.Status(400)
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"post": post,
+	})
+}
+
+func GetPostsByUser(ctx *gin.Context) {
+	id := ctx.Param("id")
+	var posts []models.Post
+	result := initializers.DB.Where("user_id = ?", id).Find(&posts)
+	if result.Error != nil {
+		ctx.Status(400)
+		return
+	}
+	ctx.JSON(200, gin.H{
+		"posts": posts,
 	})
 }
 
@@ -52,7 +88,7 @@ func FindPost(ctx *gin.Context) {
 	})
 }
 
-func PostUpdate(ctx *gin.Context) {
+func UpdatePost(ctx *gin.Context) {
 	id := ctx.Param("id")
 	var body struct {
 		Title string `json:"title"`
@@ -78,7 +114,7 @@ func PostUpdate(ctx *gin.Context) {
 	})
 }
 
-func PostDelete(ctx *gin.Context) {
+func DeletePost(ctx *gin.Context) {
 	id := ctx.Param("id")
 	var post models.Post
 	result := initializers.DB.First(&post, id)
